@@ -1,0 +1,26 @@
+{
+  "name": "starship-cli",
+  "version": "1.0.0",
+  "description": "A cinematic 2D terminal animation of Starship launch, stage separation, and booster catch",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js play",
+    "play": "node src/index.js play",
+    "compat": "node src/index.js play --compat",
+    "debug": "node src/index.js play --debug"
+  },
+  "keywords": [
+    "cli",
+    "animation",
+    "terminal",
+    "starship",
+    "spacex"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "ansi-escapes": "^7.3.0",
+    "log-update": "^7.2.0",
+    "string-width": "^8.2.0"
+  }
+}
