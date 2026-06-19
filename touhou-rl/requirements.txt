@@ -1,0 +1,20 @@
+# --- 核心：环境 + 预处理 ---
+gymnasium>=0.29
+numpy>=1.24
+opencv-python>=4.8
+pyyaml>=6.0
+
+# --- 内置弹幕模拟器 ---
+pygame>=2.5
+
+# --- 真实游戏对接（截屏/按键/读分）---
+mss>=9.0            # 跨平台屏幕捕获
+pynput>=1.7         # 跨平台键盘下发
+# pydirectinput>=1.0.4   # 仅 Windows，DirectInput 注入（部分游戏需要），按需启用
+# pytesseract>=0.3.10    # 若用 OCR 读 HUD 分数，按需启用（另需安装 tesseract 本体）
+
+# --- PyTorch 后端 ---
+torch>=2.1
+
+# --- 开发/测试 ---
+pytest>=7.4

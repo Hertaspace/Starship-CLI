@@ -1,0 +1,3 @@
+# MLX 后端（仅 Apple Silicon: M1/M2/M3/M4）
+# 先安装 requirements.txt，再安装本文件。
+mlx>=0.18

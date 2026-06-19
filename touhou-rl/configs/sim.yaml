@@ -1,0 +1,47 @@
+# 内置弹幕模拟器配置 —— 用于跨平台跑通整条训练管线（免真实游戏）。
+env:
+  kind: sim
+  action:
+    include_focus: true
+    include_bomb: false
+    always_shoot: true
+  obs:
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+    frame_skip: 2
+  sim:
+    field_width: 384
+    field_height: 448
+    player_speed: 4.0
+    focus_speed: 1.8
+    player_radius: 3.0
+    max_steps: 3600
+    bullet_spawn_rate: 0.18
+    max_bullets: 400
+    render_mode: rgb_array
+  reward_survive: 0.01
+  reward_death: -1.0
+  reward_graze: 0.002
+
+ppo:
+  total_steps: 5000000
+  rollout_steps: 2048
+  num_epochs: 4
+  minibatch_size: 256
+  gamma: 0.99
+  gae_lambda: 0.95
+  clip_coef: 0.2
+  ent_coef: 0.01
+  vf_coef: 0.5
+  lr: 0.00025
+  anneal_lr: true
+  norm_adv: true
+
+run:
+  backend: torch          # torch | mlx（也可用 --backend 覆盖）
+  device: auto
+  seed: 0
+  exp_name: touhou_sim_ppo
+  save_every_updates: 50

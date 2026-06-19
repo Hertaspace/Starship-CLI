@@ -1,0 +1,42 @@
+# 真实《东方永夜抄》配置 —— 需按你的机器校准（见 TODO(real-game)）。
+# 校准前先运行：python -m scripts.check_capture --config configs/real_game.yaml
+env:
+  kind: real
+  action:
+    include_focus: true
+    include_bomb: true       # 真实游戏建议开放 Bomb 以便紧急规避
+    always_shoot: true
+  obs:
+    width: 84
+    height: 84
+    grayscale: true
+    frame_stack: 4
+    frame_skip: 2
+  real:
+    window_title: "東方永夜抄"
+    # 若按标题定位失败，取消注释并按整屏像素填写：
+    # capture_region: [100, 100, 640, 480]
+    playfield_roi: [0.0, 0.0, 0.75, 1.0]   # TODO(real-game): 弹幕区相对范围（避开右侧 HUD）
+    # 以下 ROI 用于读分/读残机，按你的分辨率校准；为空则不启用对应信号：
+    # score_roi: [0.78, 0.18, 0.99, 0.24]
+    # lives_roi: [0.78, 0.30, 0.99, 0.34]
+    # bombs_roi: [0.78, 0.36, 0.99, 0.40]
+    target_fps: 30.0
+  reward_survive: 0.01
+  reward_death: -1.0
+  reward_score_scale: 0.00001
+
+ppo:
+  total_steps: 2000000
+  rollout_steps: 1024        # 真实游戏交互慢，单批小一些
+  num_epochs: 4
+  minibatch_size: 128
+  lr: 0.00025
+  anneal_lr: true
+
+run:
+  backend: torch
+  device: auto
+  seed: 0
+  exp_name: touhou_real_ppo
+  save_every_updates: 20
