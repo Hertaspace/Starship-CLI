@@ -84,8 +84,10 @@ class EnvConfig:
 
 @dataclass
 class PPOConfig:
-    total_steps: int = 5_000_000    # 训练总环境步数
-    rollout_steps: int = 2048       # 每次更新收集的步数
+    total_steps: int = 5_000_000    # 训练总环境步数（跨所有并行环境累计）
+    num_envs: int = 8               # 并行环境数（向量化加速；真实游戏强制为 1）
+    async_envs: bool = True         # True=多进程并行(AsyncVectorEnv)，False=进程内串行(Sync)
+    rollout_steps: int = 128        # 每个环境每次更新收集的步数（批大小 = rollout_steps*num_envs）
     num_epochs: int = 4             # 每批数据复用轮数
     minibatch_size: int = 256
     gamma: float = 0.99             # 折扣

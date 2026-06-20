@@ -33,4 +33,10 @@ def make_env(cfg: EnvConfig) -> gym.Env:
     return env
 
 
-__all__ = ["make_env", "make_base_env"]
+def make_vector_env(cfg: EnvConfig, num_envs: int, async_mode: bool = True):
+    """构建向量化（并行）环境，每个子环境与 make_env 完全一致。"""
+    from .vector import make_vector_env as _mk
+    return _mk(cfg, num_envs=num_envs, async_mode=async_mode)
+
+
+__all__ = ["make_env", "make_base_env", "make_vector_env"]

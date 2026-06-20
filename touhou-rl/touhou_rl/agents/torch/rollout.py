@@ -1,42 +1,37 @@
-"""单环境 rollout 缓冲 + GAE 优势估计（PyTorch）。"""
+"""向量化 rollout 缓冲 + GAE（PyTorch）。
+
+形状约定为 [steps, num_envs, ...]（CleanRL 风格）。dones[t] 表示「obs[t] 是否为
+某回合的首帧」（即上一步是否终止），GAE 用它切断跨回合的自举。
+"""
 from __future__ import annotations
 
-import numpy as np
 import torch
 
 
 class RolloutBuffer:
-    def __init__(self, steps: int, obs_shape, device):
+    def __init__(self, steps: int, num_envs: int, obs_shape, device):
         self.steps = steps
+        self.num_envs = num_envs
         self.device = device
-        self.obs = torch.zeros((steps, *obs_shape), dtype=torch.uint8, device=device)
-        self.actions = torch.zeros(steps, dtype=torch.long, device=device)
-        self.logprobs = torch.zeros(steps, device=device)
-        self.rewards = torch.zeros(steps, device=device)
-        self.dones = torch.zeros(steps, device=device)
-        self.values = torch.zeros(steps, device=device)
-        self.ptr = 0
-
-    def add(self, obs, action, logprob, reward, done, value):
-        i = self.ptr
-        self.obs[i] = obs
-        self.actions[i] = action
-        self.logprobs[i] = logprob
-        self.rewards[i] = reward
-        self.dones[i] = float(done)
-        self.values[i] = value
-        self.ptr += 1
-
-    def reset(self):
-        self.ptr = 0
+        self.obs = torch.zeros((steps, num_envs, *obs_shape), dtype=torch.uint8, device=device)
+        self.actions = torch.zeros((steps, num_envs), dtype=torch.long, device=device)
+        self.logprobs = torch.zeros((steps, num_envs), device=device)
+        self.rewards = torch.zeros((steps, num_envs), device=device)
+        self.dones = torch.zeros((steps, num_envs), device=device)
+        self.values = torch.zeros((steps, num_envs), device=device)
 
     def compute_gae(self, last_value, last_done, gamma: float, gae_lambda: float):
-        """返回 (returns, advantages)，形状 [steps]。"""
-        advantages = torch.zeros(self.steps, device=self.device)
-        last_gae = 0.0
+        """向量化 GAE。
+
+        last_value: [num_envs]  —— rollout 结束后 next_obs 的价值估计。
+        last_done : [num_envs]  —— next_obs 是否为新回合首帧。
+        返回 (returns, advantages)，形状均为 [steps, num_envs]。
+        """
+        advantages = torch.zeros_like(self.rewards)
+        last_gae = torch.zeros(self.num_envs, device=self.device)
         for t in reversed(range(self.steps)):
             if t == self.steps - 1:
-                next_nonterminal = 1.0 - float(last_done)
+                next_nonterminal = 1.0 - last_done.float()
                 next_value = last_value
             else:
                 next_nonterminal = 1.0 - self.dones[t + 1]

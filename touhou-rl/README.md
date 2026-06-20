@@ -18,6 +18,7 @@
 | 后端 | **两套实现**：① PyTorch（CUDA/CPU）② **MLX（Apple Silicon GPU）** |
 | 环境 | **两套**：① 内置 Pygame 弹幕模拟器（跨平台、免游戏即可跑通）② 真实游戏截屏+按键 |
 | 接口 | 全部遵循 [Gymnasium](https://gymnasium.farama.org/) `Env` API |
+| 加速 | **向量化多环境**：N 个环境并行采集（多进程 spawn），批量喂给 GPU |
 
 为什么做两套环境：真实游戏只能在装有《东方永夜抄》的机器上调试，而**内置模拟器**让你在任何机器上立刻验证「捕获 → 预处理 → 策略 → 动作 → 奖励 → 学习」整条链路是否打通，再无缝切到真实游戏。
 
@@ -33,7 +34,7 @@ touhou-rl/
 ├── touhou_rl/
 │   ├── config.py             # dataclass 配置 + YAML 加载
 │   ├── common/               # 动作空间、日志、工具
-│   ├── envs/                 # 模拟器环境、真实游戏环境、预处理 wrappers、make_env 工厂
+│   ├── envs/                 # 模拟器环境、真实游戏环境、预处理 wrappers、向量化(并行)环境、make_env 工厂
 │   ├── capture/              # 屏幕/窗口捕获（mss）
 │   ├── control/              # 键盘动作下发（pynput / pydirectinput）
 │   ├── perception/           # HUD 读分/读残机（模板匹配/OCR）→ 奖励信号
@@ -92,6 +93,30 @@ python -m scripts.train_mlx --config configs/sim.yaml
 
 # 切到真实游戏：把 --config 换成 configs/real_game.yaml
 ```
+
+---
+
+## 向量化多环境加速
+
+模拟器的瓶颈是 CPU 上的 Pygame 渲染与弹幕更新（纯 Python，受 GIL 限制）。
+PPO 用 **N 个并行环境**同时采集经验来加速：每步把 N 帧观测**批量**喂给 GPU 网络，
+再展平成一个大 batch 做更新。
+
+- `ppo.num_envs`：并行环境数（`configs/sim.yaml` 默认 8）。
+- `ppo.async_envs`：`true` 用多进程（`AsyncVectorEnv`，spawn）真正并行；`false` 用进程内
+  串行（`SyncVectorEnv`，便于调试/断点）。
+- `batch_size = rollout_steps × num_envs`；`rollout_steps` 现在是**每个环境**每次更新的步数。
+- **真实游戏**只能有一个游戏窗口，`num_envs` 会被自动强制为 1（与 `async` 无关）。
+
+命令行可直接覆盖，无需改 YAML：
+
+```bash
+python -m scripts.train_torch --config configs/sim.yaml --num-envs 16      # 16 个并行环境
+python -m scripts.train_torch --config configs/sim.yaml --num-envs 4 --sync-envs  # 串行调试
+```
+
+实现见 `touhou_rl/envs/vector.py`；采集与 GAE 采用 CleanRL 风格的 `[steps, num_envs]`
+张量与 classic-autoreset 约定（终止即自动重开，原终止帧放进 `info["final_observation"]`）。
 
 ---
 

@@ -27,7 +27,9 @@ env:
 
 ppo:
   total_steps: 5000000
-  rollout_steps: 2048
+  num_envs: 8              # 并行环境数（向量化加速）
+  async_envs: true         # 多进程并行；调试时可设 false 走进程内串行
+  rollout_steps: 128       # 每个环境每次更新的步数（batch = 128*8 = 1024）
   num_epochs: 4
   minibatch_size: 256
   gamma: 0.99

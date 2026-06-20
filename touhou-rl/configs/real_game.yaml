@@ -28,7 +28,9 @@ env:
 
 ppo:
   total_steps: 2000000
-  rollout_steps: 1024        # 真实游戏交互慢，单批小一些
+  num_envs: 1                # 真实游戏只能单实例（同一个游戏窗口）
+  async_envs: false
+  rollout_steps: 1024        # 真实游戏交互慢，单环境多步
   num_epochs: 4
   minibatch_size: 128
   lr: 0.00025

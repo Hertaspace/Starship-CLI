@@ -15,7 +15,8 @@ def test_load_sim_yaml():
     cfg = load_config(path)
     assert cfg.env.kind == "sim"
     assert cfg.env.obs.frame_stack == 4
-    assert cfg.ppo.rollout_steps == 2048
+    assert cfg.ppo.num_envs == 8
+    assert cfg.ppo.async_envs is True
 
 
 def test_overrides():
